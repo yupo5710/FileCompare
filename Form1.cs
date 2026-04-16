@@ -27,21 +27,39 @@ namespace FileCompare
                 if (!Directory.Exists(folderPath)) return;
 
                 string comparePath = (lv == lvwLeftDir) ? txtRightDir.Text : txtLeftDir.Text;
-                var compareFiles = Directory.Exists(comparePath)
-                    ? Directory.EnumerateFiles(comparePath).Select(p => new FileInfo(p)).ToDictionary(f => f.Name)
-                    : new Dictionary<string, FileInfo>();
 
-                // 폴더 추가 로직 (생략 가능, 파일 비교에 집중)
-                foreach (var f in Directory.EnumerateFiles(folderPath).Select(p => new FileInfo(p)).OrderBy(f => f.Name))
+                // 상대방 폴더 내 파일 및 하위 폴더 정보를 딕셔너리로 미리 준비
+                var compareItems = Directory.Exists(comparePath)
+                    ? Directory.GetFileSystemEntries(comparePath)
+                               .Select(p => File.GetAttributes(p).HasFlag(FileAttributes.Directory)
+                                            ? (FileSystemInfo)new DirectoryInfo(p)
+                                            : new FileInfo(p))
+                               .ToDictionary(i => i.Name)
+                    : new Dictionary<string, FileSystemInfo>();
+
+                // 폴더와 파일을 포함한 모든 항목 가져오기 (과제 4: 하위 폴더 처리)
+                var entries = new DirectoryInfo(folderPath).GetFileSystemInfos().OrderBy(i => i.Name);
+
+                foreach (var info in entries)
                 {
-                    var litem = new ListViewItem(f.Name);
-                    litem.SubItems.Add(FormatSizeInKb(f.Length));
-                    litem.SubItems.Add(f.LastWriteTime.ToString("g"));
+                    var litem = new ListViewItem(info.Name);
 
-                    if (compareFiles.TryGetValue(f.Name, out var rf))
+                    if (info is DirectoryInfo di) // 폴더인 경우
                     {
-                        if (f.LastWriteTime == rf.LastWriteTime) litem.ForeColor = Color.Black;
-                        else if (f.LastWriteTime > rf.LastWriteTime) litem.ForeColor = Color.Red;
+                        litem.SubItems.Add("<DIR>");
+                    }
+                    else if (info is FileInfo fi) // 파일인 경우
+                    {
+                        litem.SubItems.Add(FormatSizeInKb(fi.Length));
+                    }
+
+                    litem.SubItems.Add(info.LastWriteTime.ToString("g"));
+
+                    // 상대방 항목과 비교하여 색상 표시 (과제 4-2)
+                    if (compareItems.TryGetValue(info.Name, out var ri))
+                    {
+                        if (info.LastWriteTime == ri.LastWriteTime) litem.ForeColor = Color.Black;
+                        else if (info.LastWriteTime > ri.LastWriteTime) litem.ForeColor = Color.Red;
                         else litem.ForeColor = Color.Gray;
                     }
                     else litem.ForeColor = Color.Purple;
@@ -55,47 +73,64 @@ namespace FileCompare
             finally { lv.EndUpdate(); }
         }
 
-        // 과제 3: 왼쪽에서 오른쪽으로 복사 (>>> 버튼) 
         private void btnCopyFromLeft_Click(object sender, EventArgs e)
         {
-            var selected = lvwLeftDir.SelectedItems.Cast<ListViewItem>();
-            var leftFiles = Directory.EnumerateFiles(txtLeftDir.Text).Select(p => new FileInfo(p)).ToDictionary(f => f.Name);
-
-            foreach (var item in selected)
-            {
-                var name = item.Text;
-                if (!leftFiles.TryGetValue(name, out var src)) continue;
-
-                var destPath = Path.Combine(txtRightDir.Text, src.Name);
-                CopyFileWithConfirmation(src, destPath);
-            }
+            CopySelectedItems(lvwLeftDir, txtLeftDir.Text, txtRightDir.Text);
             RefreshLists();
         }
 
-        // 과제 3: 오른쪽에서 왼쪽으로 복사 (<<< 버튼)
         private void btnCopyFromRight_Click(object sender, EventArgs e)
         {
-            var selected = lvwRightDir.SelectedItems.Cast<ListViewItem>();
-            var rightFiles = Directory.EnumerateFiles(txtRightDir.Text).Select(p => new FileInfo(p)).ToDictionary(f => f.Name);
-
-            foreach (var item in selected)
-            {
-                var name = item.Text;
-                if (!rightFiles.TryGetValue(name, out var src)) continue;
-
-                var destPath = Path.Combine(txtLeftDir.Text, src.Name);
-                CopyFileWithConfirmation(src, destPath);
-            }
+            CopySelectedItems(lvwRightDir, txtRightDir.Text, txtLeftDir.Text);
             RefreshLists();
         }
 
-        // 과제 3 핵심: 덮어쓰기 확인 로직 
+        // 과제 4-3: 하위 폴더의 모든 내용(파일과 하위폴더 포함) 처리
+        private void CopySelectedItems(ListView lv, string srcDir, string destDir)
+        {
+            var selected = lv.SelectedItems.Cast<ListViewItem>();
+            foreach (var item in selected)
+            {
+                string srcPath = Path.Combine(srcDir, item.Text);
+                string destPath = Path.Combine(destDir, item.Text);
+
+                if (Directory.Exists(srcPath))
+                {
+                    // 폴더인 경우 재귀적으로 복사
+                    CopyDirectoryRecursively(new DirectoryInfo(srcPath), new DirectoryInfo(destPath));
+                }
+                else if (File.Exists(srcPath))
+                {
+                    // 파일인 경우 기존 확인 로직 사용
+                    CopyFileWithConfirmation(new FileInfo(srcPath), destPath);
+                }
+            }
+        }
+
+        // 재귀적 폴더 복사 메서드
+        private void CopyDirectoryRecursively(DirectoryInfo src, DirectoryInfo dest)
+        {
+            if (!dest.Exists) dest.Create();
+
+            // 하위 파일 복사
+            foreach (FileInfo fi in src.GetFiles())
+            {
+                CopyFileWithConfirmation(fi, Path.Combine(dest.FullName, fi.Name));
+            }
+
+            // 하위 폴더 복사 (재귀 호출)
+            foreach (DirectoryInfo di in src.GetDirectories())
+            {
+                CopyDirectoryRecursively(di, new DirectoryInfo(Path.Combine(dest.FullName, di.Name)));
+            }
+            Directory.SetLastWriteTime(dest.FullName, src.LastWriteTime);
+        }
+
         private void CopyFileWithConfirmation(FileInfo src, string destPath)
         {
             if (File.Exists(destPath))
             {
                 FileInfo dest = new FileInfo(destPath);
-               // 대상 파일이 더 신규 파일인 경우 확인창 출력 
                 if (dest.LastWriteTime > src.LastWriteTime)
                 {
                     string msg = $"대상에 동일한 이름의 파일이 이미 있습니다.\n" +
@@ -106,11 +141,12 @@ namespace FileCompare
                     if (MessageBox.Show(this, msg, "덮어쓰기 확인",
                         MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.No)
                     {
-                        return; // 아니요 선택 시 복사 중단
+                        return;
                     }
                 }
             }
-            File.Copy(src.FullName, destPath, true); // 복사 진행 (덮어쓰기 허용) 
+            File.Copy(src.FullName, destPath, true);
+            File.SetLastWriteTime(destPath, src.LastWriteTime);
         }
 
         private void RefreshLists()
