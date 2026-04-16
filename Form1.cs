@@ -15,7 +15,7 @@ namespace FileCompare
             InitializeComponent();
         }
 
-        // 이미지(image_773f08.png)에서 사용하는 크기 변환 보조 함수
+        //
         private string FormatSizeInKb(long bytes) => $"{(bytes + 1023) / 1024:N0} KB";
 
         private void PopulateListView(ListView lv, string folderPath)
@@ -27,7 +27,7 @@ namespace FileCompare
             {
                 if (!Directory.Exists(folderPath)) return;
 
-                // 비교를 위해 상대방 폴더의 파일 정보(rf)를 가져오는 로직 (이미지 맥락 반영)
+                // 비교를 위해 상대방 폴더의 파일 정보(rf)를 가져오는 로직
                 string comparePath = (lv == lvwLeftDir) ? txtRightDir.Text : txtLeftDir.Text;
                 var compareFiles = Directory.Exists(comparePath)
                     ? Directory.EnumerateFiles(comparePath)
@@ -48,7 +48,7 @@ namespace FileCompare
                     lv.Items.Add(item);
                 }
 
-                // 2. 파일 추가 및 비교 (이미지 image_773f08.png 내용 그대로 반영)
+                // 2. 파일 추가 및 비교 
                 var files = Directory.EnumerateFiles(folderPath)
                     .Select(p => new FileInfo(p))
                     .OrderBy(f => f.Name);
@@ -134,9 +134,14 @@ namespace FileCompare
                 }
             }
         }
+        private void btnCopyFromLeft_Click(object sender, EventArgs e)
+        {
 
-        // 미사용 이벤트 핸들러 (코드 정리를 위해 삭제)
-        private void btnCopyFromLeft_Click(object sender, EventArgs e) { }
-        private void btnCopyFromRight_Click(object sender, EventArgs e) { }
+        }
+
+        private void btnCopyFromRight_Click(object sender, EventArgs e)
+        {
+
+        }
     }
 }

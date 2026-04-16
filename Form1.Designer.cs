@@ -179,6 +179,7 @@
             btnCopyFromLeft.TabIndex = 5;
             btnCopyFromLeft.Text = ">>>";
             btnCopyFromLeft.UseVisualStyleBackColor = true;
+            btnCopyFromLeft.Click += btnCopyFromLeft_Click;
             // 
             // flowLayoutPanel2
             // 
