@@ -96,7 +96,27 @@ namespace FileCompare
 
                 if (Directory.Exists(srcPath))
                 {
-                    // 폴더인 경우 재귀적으로 복사
+                    // [추가] 폴더인 경우에도 대상이 더 최신인지 확인
+                    if (Directory.Exists(destPath))
+                    {
+                        DirectoryInfo srcInfo = new DirectoryInfo(srcPath);
+                        DirectoryInfo destInfo = new DirectoryInfo(destPath);
+
+                        if (destInfo.LastWriteTime > srcInfo.LastWriteTime)
+                        {
+                            string msg = $"대상에 동일한 이름의 폴더가 이미 있습니다.\n" +
+                                         $"대상 폴더가 더 신규 폴더입니다. 덮어쓰시겠습니까?\n\n" +
+                                         $"원본 폴더 수정일: {srcInfo.LastWriteTime}\n" +
+                                         $"대상 폴더 수정일: {destInfo.LastWriteTime}";
+
+                            if (MessageBox.Show(this, msg, "폴더 덮어쓰기 확인",
+                                MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.No)
+                            {
+                                continue; // '아니오'를 누르면 해당 폴더는 건너뜀
+                            }
+                        }
+                    }
+                    // 폴더 재귀 복사 호출
                     CopyDirectoryRecursively(new DirectoryInfo(srcPath), new DirectoryInfo(destPath));
                 }
                 else if (File.Exists(srcPath))
