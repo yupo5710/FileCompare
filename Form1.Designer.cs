@@ -72,7 +72,6 @@
             lblAppName.Size = new Size(471, 92);
             lblAppName.TabIndex = 0;
             lblAppName.Text = "File Compare";
-            lblAppName.Click += lblAppName_Click;
             // 
             // splitContainer1
             // 
@@ -85,7 +84,6 @@
             splitContainer1.Panel1.Controls.Add(flowLayoutPanel1);
             splitContainer1.Panel1.Controls.Add(panel2);
             splitContainer1.Panel1.Controls.Add(panel1);
-            splitContainer1.Panel1.Paint += splitContainer1_Panel1_Paint;
             // 
             // splitContainer1.Panel2
             // 
@@ -104,7 +102,6 @@
             flowLayoutPanel1.Name = "flowLayoutPanel1";
             flowLayoutPanel1.Size = new Size(596, 509);
             flowLayoutPanel1.TabIndex = 7;
-            flowLayoutPanel1.Paint += flowLayoutPanel1_Paint;
             // 
             // lvwLeftDir
             // 
@@ -118,7 +115,6 @@
             lvwLeftDir.TabIndex = 6;
             lvwLeftDir.UseCompatibleStateImageBehavior = false;
             lvwLeftDir.View = View.Details;
-            lvwLeftDir.SelectedIndexChanged += lvwLeftDir_SelectedIndexChanged_1;
             // 
             // lvwLeftDirName
             // 
@@ -234,11 +230,10 @@
             // txtRightDir
             // 
             txtRightDir.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
-            txtRightDir.Location = new Point(3, 8);
+            txtRightDir.Location = new Point(3, 6);
             txtRightDir.Name = "txtRightDir";
             txtRightDir.Size = new Size(448, 39);
             txtRightDir.TabIndex = 1;
-            txtRightDir.TextChanged += txtRightDir_TextChanged;
             // 
             // btnRightDir
             // 
@@ -263,10 +258,9 @@
             // 
             // btnCopyFromRight
             // 
-            btnCopyFromRight.Anchor = AnchorStyles.Top | AnchorStyles.Left;
             btnCopyFromRight.Location = new Point(3, 2);
             btnCopyFromRight.Name = "btnCopyFromRight";
-            btnCopyFromRight.Size = new Size(118, 43);
+            btnCopyFromRight.Size = new Size(137, 43);
             btnCopyFromRight.TabIndex = 5;
             btnCopyFromRight.Text = "<<<";
             btnCopyFromRight.UseVisualStyleBackColor = true;
